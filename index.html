@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le Glacier Gourmand — Gestion Recettes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--vert:#3B5C3F;--vert-pale:#EAF0E6;--ivoire:#F7F3EC;--cappuccino:#C4A882;--cappuccino-f:#8B6F4E;--brun:#3D2B1F;--gris:#6B7280;--border:rgba(59,92,63,0.15);--bg2:#F0EDE6;--warn:#BA7517;--red:#A32D2D;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Jost',sans-serif;background:var(--ivoire);color:var(--brun);min-height:100vh;}
+.shell{display:grid;grid-template-columns:230px 1fr;min-height:100vh;}
+.sidebar{background:var(--vert);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.main{padding:2rem;overflow-y:auto;}
+.sb-brand{padding:1.5rem 1.25rem 1rem;border-bottom:1px solid rgba(196,168,130,0.2);}
+.sb-logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:var(--cappuccino);line-height:1.2;}
+.sb-sub{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(247,243,236,0.35);margin-top:4px;}
+.sb-nav{padding:1rem 0;flex:1;}
+.nav-sec{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(196,168,130,0.4);padding:.75rem 1.25rem .3rem;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:.55rem 1.25rem;cursor:pointer;color:rgba(247,243,236,0.65);font-size:13px;font-weight:300;border-left:2px solid transparent;transition:all .15s;}
+.nav-item:hover{color:var(--ivoire);background:rgba(255,255,255,0.05);}
+.nav-item.active{color:var(--cappuccino);border-left-color:var(--cappuccino);background:rgba(196,168,130,0.08);font-weight:400;}
+.nav-icon{font-size:14px;width:18px;text-align:center;}
+.save-zone{padding:1rem 1.25rem;border-top:1px solid rgba(196,168,130,0.2);}
+.save-title{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(196,168,130,0.5);margin-bottom:8px;}
+.sb-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 12px;border-radius:4px;border:none;font-size:12px;font-family:'Jost',sans-serif;cursor:pointer;width:100%;transition:all .15s;margin-bottom:6px;}
+.sb-save{background:var(--cappuccino);color:var(--brun);font-weight:500;}
+.sb-save:hover{background:#d4b892;}
+.sb-load{background:rgba(255,255,255,0.1);color:rgba(247,243,236,0.85);}
+.sb-load:hover{background:rgba(255,255,255,0.18);}
+.save-status{font-size:10px;text-align:center;min-height:14px;margin-top:2px;transition:all .3s;}
+.st-ok{color:#86efac;}.st-err{color:#fca5a5;}.st-wait{color:rgba(247,243,236,0.4);}
+.sb-bottom{padding:1rem 1.25rem;border-top:1px solid rgba(196,168,130,0.2);}
+.sb-info{font-size:10px;color:rgba(247,243,236,0.3);line-height:1.7;}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2rem;flex-wrap:wrap;gap:12px;}
+.pt{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--vert);font-weight:400;}
+.pt em{font-style:italic;color:var(--cappuccino-f);}
+.ps{font-size:12px;color:var(--gris);margin-top:4px;}
+.btn{padding:8px 18px;border-radius:4px;border:.5px solid var(--border);font-size:12px;font-family:'Jost',sans-serif;cursor:pointer;transition:all .15s;}
+.btn-p{background:var(--vert);color:var(--ivoire);border-color:var(--vert);}
+.btn-g{background:none;color:var(--vert);border-color:var(--border);}
+.btn-g:hover{background:var(--vert-pale);}
+.btn-d{background:none;color:var(--red);border-color:rgba(163,45,45,0.3);font-size:11px;padding:5px 10px;}
+.card{background:white;border:.5px solid var(--border);border-radius:6px;padding:1.5rem;margin-bottom:1rem;}
+.card-sm{padding:1rem 1.25rem;}
+.slbl{font-size:9px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--gris);margin-bottom:8px;}
+.dt{width:100%;border-collapse:collapse;}
+.dt th{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--gris);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
+.dt th.r{text-align:right;}
+.dt td{padding:9px 10px;border-bottom:.5px solid var(--border);font-size:13px;vertical-align:middle;}
+.dt tr:last-child td{border-bottom:none;}
+.dt tr:hover td{background:var(--ivoire);}
+.ci{width:100%;padding:5px 8px;border-radius:4px;border:.5px solid transparent;background:transparent;font-size:13px;font-family:'Jost',sans-serif;color:var(--brun);outline:none;text-align:right;}
+.ci:focus{border-color:var(--vert);background:white;}
+.ci.nl{text-align:left;}
+.cb{font-size:10px;padding:2px 10px;border-radius:20px;display:inline-block;}
+.cb-base{background:var(--vert-pale);color:var(--vert);}
+.cb-fruit{background:#FEF3C7;color:#92400E;}
+.cb-coque{background:#F3E8FF;color:#6B21A8;}
+.cb-milk{background:#E0F2FE;color:#0369A1;}
+.cb-crepe{background:#FFF1F2;color:#BE123C;}
+.cb-autre{background:var(--bg2);color:var(--gris);}
+.sel{width:100%;padding:5px 6px;border-radius:4px;border:.5px solid var(--border);background:white;font-size:12px;font-family:'Jost',sans-serif;color:var(--brun);outline:none;}
+.rtabs{display:flex;gap:6px;margin-bottom:1.5rem;flex-wrap:wrap;}
+.rtab{padding:6px 14px;border-radius:4px;border:.5px solid var(--border);font-size:12px;cursor:pointer;background:white;color:var(--gris);white-space:nowrap;font-family:'Jost',sans-serif;}
+.rtab.active{background:var(--vert);color:var(--ivoire);border-color:var(--vert);}
+.rtab.add{border-style:dashed;color:var(--vert);border-color:var(--vert);}
+.rg{display:grid;grid-template-columns:1fr 310px;gap:1.5rem;align-items:start;}
+.it{width:100%;border-collapse:collapse;}
+.it th{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--gris);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);}
+.it th.r{text-align:right;}
+.it td{padding:7px 8px;border-bottom:.5px solid var(--border);font-size:13px;vertical-align:middle;}
+.it tfoot td{padding:9px 8px;border-top:1.5px solid var(--border);font-weight:500;background:var(--ivoire);}
+.qw{display:flex;flex-direction:column;gap:2px;}
+.qn{width:100%;padding:5px 8px;border-radius:4px;border:.5px solid var(--border);background:var(--bg2);font-size:13px;font-family:'Jost',sans-serif;color:var(--brun);text-align:right;outline:none;}
+.qn:focus{border-color:var(--vert);background:white;}
+.qs{width:100%;accent-color:var(--vert);}
+.cc{text-align:right;font-weight:500;font-size:13px;color:var(--brun);}
+.cc.vt{color:var(--vert);}
+.pi{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:4px;margin:8px 0;font-size:12px;}
+.pi-ok{background:var(--vert-pale);color:var(--vert);}
+.pi-warn{background:#FEF3C7;color:var(--warn);}
+.pi-bad{background:#FEE2E2;color:var(--red);}
+.rp-wrap{position:sticky;top:1rem;}
+.rp-head{border-radius:6px 6px 0 0;padding:1rem 1.25rem;}
+.rp-glace{background:#3B5C3F;}.rp-milk{background:#0369A1;}.rp-crepe{background:#BE123C;}.rp-gaufre{background:#7C3AED;}
+.rp-parfum{font-family:'Cormorant Garamond',serif;font-size:20px;font-style:italic;color:var(--ivoire);}
+.rp-crl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(247,243,236,0.5);margin-top:8px;}
+.rp-crv{font-size:28px;font-weight:300;color:var(--cappuccino);margin-top:2px;}
+.rp-body{background:white;border:.5px solid var(--border);border-top:none;border-radius:0 0 6px 6px;padding:1rem 1.25rem;}
+.rp-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:.5px solid var(--border);color:var(--gris);}
+.rp-row:last-child{border-bottom:none;}
+.rp-row span:last-child{font-weight:500;color:var(--brun);}
+.mc{border-radius:4px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;background:var(--bg2);}
+.mc.rec-v{background:var(--vert);}.mc.rec-b{background:#0369A1;}.mc.rec-c{background:#BE123C;}.mc.rec-g{background:#7C3AED;}
+.mc-lbl{font-size:11px;color:var(--gris);}
+.mc.rec-v .mc-lbl,.mc.rec-b .mc-lbl,.mc.rec-c .mc-lbl,.mc.rec-g .mc-lbl{color:rgba(247,243,236,0.7);}
+.mc-val{font-size:17px;font-weight:500;color:var(--brun);}
+.mc.rec-v .mc-val,.mc.rec-b .mc-val,.mc.rec-c .mc-val,.mc.rec-g .mc-val{color:var(--cappuccino);}
+.mc-ben{font-size:10px;color:var(--gris);margin-top:1px;}
+.mc.rec-v .mc-ben,.mc.rec-b .mc-ben,.mc.rec-c .mc-ben,.mc.rec-g .mc-ben{color:rgba(247,243,236,0.5);}
+.fc-r{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:.5px solid var(--border);}
+.fc-r:last-child{border-bottom:none;}
+.fc-r label{font-size:12px;color:var(--gris);flex:1;}
+.fc-r input{width:80px;padding:4px 8px;border-radius:4px;border:.5px solid var(--border);background:var(--bg2);font-size:12px;font-family:'Jost',sans-serif;color:var(--brun);text-align:right;outline:none;}
+.fc-r input:focus{border-color:var(--vert);background:white;}
+.fc-r span{font-size:11px;color:var(--gris);}
+.repere{padding:8px 12px;border-radius:4px;margin-bottom:6px;border:1px solid;}
+.rep-title{font-size:11px;font-weight:500;margin-bottom:2px;}
+.rep-detail{font-size:10px;color:var(--gris);line-height:1.6;}
+.rep-marge{font-size:11px;font-weight:500;margin-top:3px;}
+.st{width:100%;border-collapse:collapse;font-size:12px;}
+.st th{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--gris);padding:8px;text-align:left;border-bottom:1px solid var(--border);}
+.st td{padding:10px 8px;border-bottom:.5px solid var(--border);}
+.st tr:last-child td{border-bottom:none;}
+.st td.gn{font-weight:500;color:var(--vert);}
+.st td.rc{font-weight:500;color:var(--vert);background:var(--vert-pale);}
+.st td.vt{font-weight:500;color:var(--cappuccino-f);background:#FFF8F0;}
+.st .cat-row td{background:var(--ivoire);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gris);padding:6px 8px;}
+.tb{font-size:10px;padding:2px 8px;border-radius:20px;}
+.tb-glace{background:var(--vert-pale);color:var(--vert);}
+.tb-milk{background:#E0F2FE;color:#0369A1;}
+.tb-crepe{background:#FFF1F2;color:#BE123C;}
+.tb-gaufre{background:#F3E8FF;color:#7C3AED;}
+.tb-fruit{background:#FEF3C7;color:#92400E;}
+.tb-coque{background:#F3E8FF;color:#6B21A8;}
+.notif{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--vert);color:var(--ivoire);padding:10px 18px;border-radius:4px;font-size:13px;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;z-index:999;}
+.notif.show{opacity:1;transform:translateY(0);}
+.spinner{display:inline-block;width:10px;height:10px;border:2px solid rgba(196,168,130,0.3);border-top-color:var(--cappuccino);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+/* PRODUCTION */
+.prod-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:1.5rem;margin-bottom:1.5rem;align-items:start;}
+.prod-select-box{background:white;border:.5px solid var(--border);border-radius:6px;overflow:hidden;}
+.prod-select-header{padding:.75rem 1.25rem;border-bottom:.5px solid var(--border);background:var(--ivoire);}
+.prod-check-row{display:flex;align-items:center;gap:12px;padding:10px 1.25rem;border-bottom:.5px solid var(--border);cursor:pointer;transition:background .1s;}
+.prod-check-row:last-child{border-bottom:none;}
+.prod-check-row:hover{background:var(--ivoire);}
+.prod-check-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--vert);cursor:pointer;flex-shrink:0;}
+.prod-check-label{font-size:13px;color:var(--brun);flex:1;}
+.prod-check-detail{font-size:11px;color:var(--gris);}
+.prod-result{background:var(--vert);border-radius:6px;padding:1.5rem;}
+.prod-result-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:var(--cappuccino);margin-bottom:1rem;}
+.prod-stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:1.25rem;}
+.prod-stat{background:rgba(255,255,255,0.08);border-radius:4px;padding:12px;text-align:center;}
+.prod-stat-val{font-size:26px;font-weight:300;color:var(--cappuccino);}
+.prod-stat-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(247,243,236,0.5);margin-top:3px;}
+.prod-ing-table{width:100%;border-collapse:collapse;margin-top:1rem;}
+.prod-ing-table th{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(247,243,236,0.4);padding:6px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.1);}
+.prod-ing-table th.r{text-align:right;}
+.prod-ing-table td{padding:8px 8px;border-bottom:.5px solid rgba(255,255,255,0.07);font-size:12px;color:rgba(247,243,236,0.85);}
+.prod-ing-table tr:last-child td{border-bottom:none;}
+.prod-ing-table td.val{text-align:right;font-weight:500;color:var(--cappuccino);}
+.prod-ing-table tr.base-row td{color:var(--ivoire);font-weight:500;}
+.prod-empty{text-align:center;padding:2rem;color:rgba(247,243,236,0.4);font-style:italic;font-family:'Cormorant Garamond',serif;font-size:16px;}
+.prod-recipe-card{background:rgba(255,255,255,0.06);border-radius:4px;padding:10px 12px;margin-bottom:6px;}
+.prod-recipe-name{font-size:13px;font-weight:400;color:var(--ivoire);margin-bottom:4px;}
+.prod-recipe-detail{font-size:11px;color:rgba(247,243,236,0.5);line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">Le Glacier<br>Gourmand</div>
+      <div class="sb-sub">Gestion Recettes Pro</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="nav-sec">Données</div>
+      <div class="nav-item active" onclick="showPage('db')" id="nav-db"><span class="nav-icon">🗄️</span> Base ingrédients</div>
+      <div class="nav-sec">Recettes</div>
+      <div class="nav-item" onclick="showPage('glaces')" id="nav-glaces"><span class="nav-icon">🍦</span> Glaces vegan</div>
+      <div class="nav-item" onclick="showPage('milkshakes')" id="nav-milkshakes"><span class="nav-icon">🥤</span> Milkshakes / Frappés</div>
+      <div class="nav-item" onclick="showPage('crepes')" id="nav-crepes"><span class="nav-icon">🥞</span> Crêpes & Gaufres</div>
+      <div class="nav-sec">Analyse</div>
+      <div class="nav-item" onclick="showPage('summary')" id="nav-summary"><span class="nav-icon">📊</span> Récapitulatif</div>
+      <div class="nav-item" onclick="showPage('production')" id="nav-production"><span class="nav-icon">🏭</span> Planning production</div>
+    </nav>
+    <div class="save-zone">
+      <div class="save-title">☁️ Google Drive</div>
+      <button class="sb-btn sb-save" onclick="driveSync()">💾 Sauvegarder sur Drive</button>
+      <button class="sb-btn sb-load" onclick="driveLoad()">🔄 Charger depuis Drive</button>
+      <div class="save-status st-wait" id="save-status">Non synchronisé</div>
+    </div>
+    <div class="sb-bottom">
+      <div class="sb-info">Données sauvegardées sur<br>votre Google Drive.<br>Accessible depuis<br>n'importe quel appareil.</div>
+    </div>
+  </aside>
+  <main class="main">
+    <div id="page-db">
+      <div class="ph">
+        <div><div class="pt">Base <em>Ingrédients</em></div><div class="ps">Mettez à jour les prix — toutes les recettes se recalculent automatiquement</div></div>
+        <button class="btn btn-p" onclick="addIng()">+ Ajouter</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table class="dt">
+          <thead><tr>
+            <th style="width:34%">Ingrédient</th><th style="width:13%">Catégorie</th>
+            <th class="r" style="width:18%">Prix achat</th><th style="width:12%">Unité</th>
+            <th class="r" style="width:16%">Prix/kg ou L</th><th style="width:7%"></th>
+          </tr></thead>
+          <tbody id="db-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="page-glaces" style="display:none">
+      <div class="ph">
+        <div><div class="pt">Glaces <em>Vegan</em></div><div class="ps">10 kg préparation = 2 bacs de 5 kg · Retail 1 450 Rs/kg · Scoop 190 Rs/100g</div></div>
+        <button class="btn btn-p" onclick="addRec('glaces')">+ Nouveau parfum</button>
+      </div>
+      <div class="rtabs" id="tabs-glaces"></div>
+      <div id="editor-glaces"></div>
+    </div>
+    <div id="page-milkshakes" style="display:none">
+      <div class="ph">
+        <div><div class="pt">Milkshakes & <em>Frappés</em></div><div class="ps">Rentabilité par verre</div></div>
+        <button class="btn btn-p" onclick="addRec('milkshakes')">+ Nouveau milkshake</button>
+      </div>
+      <div class="rtabs" id="tabs-milkshakes"></div>
+      <div id="editor-milkshakes"></div>
+    </div>
+    <div id="page-crepes" style="display:none">
+      <div class="ph">
+        <div><div class="pt">Crêpes & <em>Gaufres</em></div><div class="ps">Rentabilité par pièce</div></div>
+        <button class="btn btn-p" onclick="addRec('crepes')">+ Nouvelle recette</button>
+      </div>
+      <div class="rtabs" id="tabs-crepes"></div>
+      <div id="editor-crepes"></div>
+    </div>
+    <div id="page-production" style="display:none">
+      <div class="ph">
+        <div><div class="pt">Planning <em>Production</em></div><div class="ps">Sélectionnez vos recettes — calcul automatique de la base et des ingrédients nécessaires</div></div>
+        <button class="btn btn-p" onclick="resetSelection()">↺ Réinitialiser</button>
+      </div>
+      <div id="production-content"></div>
+    </div>
+      <div class="ph"><div><div class="pt">Récapitulatif <em>Gamme</em></div><div class="ps">Vue d'ensemble de la rentabilité</div></div></div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table class="st">
+          <thead><tr><th>Produit</th><th>Type</th><th>Unité</th><th>Coût</th><th>Prix vente</th><th class="rc">Marge %</th><th>Bénéfice</th></tr></thead>
+          <tbody id="sum-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="notif" id="notif"></div>
+
+<script>
+// ══ GOOGLE DRIVE API URL ══
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9pGVAimDQGeIMOA-XApa3u4IAh62cDeaofMNrwtWXUuh3MnXWVV4O_bxbrCv8ZWcb/exec";
+
+// ══ CONSTANTES ══
+var PRIX_KG_RETAIL=1450,BAC_KG=5,PRIX_BAC_RETAIL=7250,PRIX_SCOOP=190,SCOOPS_BAC=50,CA_SCOOP_BAC=9500;
+var BASE_COUT_KG=(function(){var i=[{q:1000,p:135},{q:30,p:282.61},{q:28,p:1080},{q:7,p:900},{q:90,p:54.975},{q:45,p:1130},{q:12,p:190},{q:88,p:190},{q:8,p:1625},{q:8,p:4205}];return i.reduce(function(s,x){return s+(x.q/1000)*x.p;},0)/1.316;})();
+
+// ══ DONNÉES PAR DÉFAUT ══
+var DEFAULT_DB=[
+  {id:1,nom:"Base vegan (avoine)",cat:"base",pa:135,unite:"/ litre",pk:BASE_COUT_KG,locked:true},
+  {id:2,nom:"Sucre saccharose",cat:"base",pa:109.95,unite:"/ 2 kg",pk:54.975},
+  {id:3,nom:"Dextrose",cat:"base",pa:4750,unite:"/ 25 kg",pk:190},
+  {id:4,nom:"Sirop glucose 38DE",cat:"base",pa:4750,unite:"/ 25 kg",pk:190},
+  {id:5,nom:"Crémoline Atlas",cat:"base",pa:1130,unite:"/ kg",pk:1130},
+  {id:6,nom:"Inuline instantanée",cat:"base",pa:1625,unite:"/ kg",pk:1625},
+  {id:7,nom:"Stabilisant",cat:"base",pa:4205,unite:"/ kg",pk:4205},
+  {id:8,nom:"Huile de riz",cat:"base",pa:565.22,unite:"/ 2 L",pk:282.61},
+  {id:9,nom:"Beurre de cacao",cat:"base",pa:1080,unite:"/ kg",pk:1080},
+  {id:10,nom:"Protéines de pois",cat:"base",pa:360,unite:"/ 400 g",pk:900},
+  {id:11,nom:"Mangue fraîche",cat:"fruit",pa:1900,unite:"/ 10 kg",pk:190},
+  {id:12,nom:"Pitaya",cat:"fruit",pa:1500,unite:"/ 8 kg",pk:187.5},
+  {id:13,nom:"Avocat",cat:"fruit",pa:300,unite:"/ kg",pk:300},
+  {id:14,nom:"Banane",cat:"fruit",pa:50,unite:"/ kg",pk:50},
+  {id:15,nom:"Ananas",cat:"fruit",pa:80,unite:"/ kg",pk:80},
+  {id:16,nom:"Pâte de pistache",cat:"coque",pa:2800,unite:"/ kg",pk:2800},
+  {id:17,nom:"Pâte de noisette",cat:"coque",pa:2200,unite:"/ kg",pk:2200},
+  {id:18,nom:"Pâte de gianduja",cat:"coque",pa:2400,unite:"/ kg",pk:2400},
+  {id:19,nom:"Cacao en poudre",cat:"coque",pa:800,unite:"/ kg",pk:800},
+  {id:20,nom:"Peanut butter",cat:"coque",pa:600,unite:"/ kg",pk:600},
+  {id:21,nom:"Lait végétal amandes",cat:"milk",pa:147,unite:"/ litre",pk:147},
+  {id:22,nom:"Sauce chocolat maison",cat:"milk",pa:20,unite:"/ portion",pk:20,pp:true},
+  {id:23,nom:"Sauce caramel maison",cat:"milk",pa:20,unite:"/ portion",pk:20,pp:true},
+  {id:24,nom:"Éclats noisettes/pistaches",cat:"milk",pa:20,unite:"/ portion",pk:20,pp:true},
+  {id:25,nom:"Sucre de canne",cat:"milk",pa:115,unite:"/ kg",pk:115},
+  {id:26,nom:"Café espresso (poudre)",cat:"milk",pa:1200,unite:"/ kg",pk:1200},
+  {id:27,nom:"Glaçons",cat:"milk",pa:50,unite:"/ kg",pk:50},
+  {id:28,nom:"Farine sarrasin",cat:"crepe",pa:185,unite:"/ kg",pk:185},
+  {id:29,nom:"Complément farine vegan",cat:"crepe",pa:362,unite:"/ 340 g",pk:1064.7},
+  {id:30,nom:"Lait végétal avoine",cat:"crepe",pa:135,unite:"/ litre",pk:135},
+  {id:31,nom:"Huile olive",cat:"crepe",pa:600,unite:"/ kg",pk:600},
+  {id:32,nom:"Fromage râpé",cat:"crepe",pa:0,unite:"/ kg",pk:0},
+  {id:33,nom:"Champignons frais",cat:"crepe",pa:0,unite:"/ kg",pk:0},
+  {id:34,nom:"Fromage de chèvre",cat:"crepe",pa:0,unite:"/ kg",pk:0},
+  {id:35,nom:"Saumon frais",cat:"crepe",pa:0,unite:"/ kg",pk:0},
+  {id:36,nom:"Huile truffe blanche",cat:"crepe",pa:0,unite:"/ kg",pk:0},
+  {id:37,nom:"Miel Maurice",cat:"autre",pa:60,unite:"/ portion",pk:60,pp:true},
+  {id:38,nom:"Confiture fruits Maurice",cat:"autre",pa:40,unite:"/ portion",pk:40,pp:true},
+  {id:39,nom:"Sucre brun canne",cat:"autre",pa:115,unite:"/ kg",pk:115},
+];
+var DEFAULT_RECS={
+  glaces:[
+    {id:1,nom:"Pistache",st:"coque",pv:0,ings:[{id:1,dbId:1,qg:8630,pp:false},{id:2,dbId:16,qg:1150,pp:false},{id:3,dbId:3,qg:220,pp:false}],emb:100,en:80,mo:300},
+    {id:2,nom:"Mangue Vanille",st:"fruit",pv:0,ings:[{id:10,dbId:1,qg:5000,pp:false},{id:11,dbId:11,qg:4000,pp:false},{id:12,dbId:2,qg:1000,pp:false}],emb:100,en:80,mo:300},
+  ],
+  milkshakes:[
+    {id:10,nom:"Amore Pistacchio",st:"milk",pv:420,ings:[{id:100,dbId:1,qg:200,pp:false},{id:101,dbId:21,qg:250,pp:false},{id:102,dbId:24,qg:0,pp:true}],emb:30,en:20,mo:50},
+    {id:11,nom:"Choco Instance",st:"milk",pv:380,ings:[{id:110,dbId:1,qg:200,pp:false},{id:111,dbId:21,qg:250,pp:false},{id:112,dbId:22,qg:0,pp:true}],emb:30,en:20,mo:50},
+    {id:12,nom:"Café Créma",st:"milk",pv:380,ings:[{id:120,dbId:1,qg:200,pp:false},{id:121,dbId:21,qg:250,pp:false},{id:122,dbId:26,qg:5,pp:false},{id:123,dbId:23,qg:0,pp:true},{id:124,dbId:24,qg:0,pp:true}],emb:30,en:20,mo:50},
+    {id:13,nom:"Bananas",st:"milk",pv:380,ings:[{id:130,dbId:1,qg:200,pp:false},{id:131,dbId:21,qg:250,pp:false},{id:132,dbId:22,qg:0,pp:true}],emb:30,en:20,mo:50},
+    {id:14,nom:"Café Frappé",st:"milk",pv:300,ings:[{id:140,dbId:26,qg:8,pp:false},{id:141,dbId:27,qg:150,pp:false},{id:142,dbId:25,qg:15,pp:false}],emb:20,en:15,mo:40},
+    {id:15,nom:"Ananas",st:"milk",pv:350,ings:[{id:150,dbId:1,qg:200,pp:false},{id:151,dbId:21,qg:250,pp:false},{id:152,dbId:15,qg:100,pp:false}],emb:30,en:20,mo:50},
+  ],
+  crepes:[
+    {id:20,nom:"Crêpe nature",st:"crepe",pv:180,ings:[{id:200,dbId:28,qg:80,pp:false},{id:201,dbId:29,qg:30,pp:false},{id:202,dbId:30,qg:150,pp:false},{id:203,dbId:31,qg:10,pp:false}],emb:15,en:25,mo:60},
+    {id:21,nom:"Gaufre nature",st:"gaufre",pv:280,ings:[{id:210,dbId:28,qg:100,pp:false},{id:211,dbId:29,qg:40,pp:false},{id:212,dbId:30,qg:180,pp:false},{id:213,dbId:31,qg:15,pp:false}],emb:15,en:30,mo:60},
+    {id:22,nom:"Crêpe salée 3 fromages",st:"crepe",pv:350,ings:[{id:220,dbId:28,qg:80,pp:false},{id:221,dbId:29,qg:30,pp:false},{id:222,dbId:30,qg:150,pp:false},{id:223,dbId:32,qg:60,pp:false}],emb:20,en:25,mo:70},
+    {id:23,nom:"La Forestière",st:"crepe",pv:360,ings:[{id:230,dbId:28,qg:80,pp:false},{id:231,dbId:29,qg:30,pp:false},{id:232,dbId:30,qg:150,pp:false},{id:233,dbId:33,qg:80,pp:false},{id:234,dbId:36,qg:5,pp:false}],emb:20,en:25,mo:70},
+    {id:24,nom:"Crêpe chocolat",st:"crepe",pv:280,ings:[{id:240,dbId:28,qg:80,pp:false},{id:241,dbId:29,qg:30,pp:false},{id:242,dbId:30,qg:150,pp:false},{id:243,dbId:22,qg:0,pp:true}],emb:15,en:25,mo:60},
+    {id:25,nom:"Gaufre + boule glace",st:"gaufre",pv:430,ings:[{id:250,dbId:28,qg:100,pp:false},{id:251,dbId:29,qg:40,pp:false},{id:252,dbId:30,qg:180,pp:false},{id:253,dbId:1,qg:100,pp:false}],emb:20,en:30,mo:70},
+  ],
+};
+
+// ══ STATE ══
+var db,recs,curRec,nextDbId,nextId,nextRIng;
+
+function initState(data){
+  if(data){
+    db=data.db; recs=data.recs;
+    curRec=data.curRec||{glaces:1,milkshakes:10,crepes:20};
+    nextDbId=data.nextDbId||200; nextId=data.nextId||300; nextRIng=data.nextRIng||1000;
+  } else {
+    db=JSON.parse(JSON.stringify(DEFAULT_DB));
+    recs=JSON.parse(JSON.stringify(DEFAULT_RECS));
+    curRec={glaces:1,milkshakes:10,crepes:20};
+    nextDbId=200; nextId=300; nextRIng=1000;
+  }
+}
+
+function getState(){
+  return {db:db,recs:recs,curRec:curRec,nextDbId:nextDbId,nextId:nextId,nextRIng:nextRIng,savedAt:new Date().toISOString()};
+}
+
+// ══ GOOGLE DRIVE SYNC ══
+function setSaveStatus(msg,cls){
+  var el=document.getElementById('save-status');
+  if(!el)return;
+  el.textContent=msg;
+  el.className='save-status '+(cls||'st-wait');
+}
+
+function driveSync(){
+  setSaveStatus('⏳ Sauvegarde en cours...','st-wait');
+  var payload=getState();
+  fetch(SCRIPT_URL,{
+    method:'POST',
+    body:JSON.stringify({action:'save',payload:payload})
+  })
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.success){
+      var now=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      setSaveStatus('✓ Sauvegardé à '+now,'st-ok');
+      notify('💾 Données sauvegardées sur Google Drive !');
+    } else {
+      setSaveStatus('⚠ Erreur : '+( d.error||'inconnue'),'st-err');
+    }
+  })
+  .catch(function(e){
+    setSaveStatus('⚠ Connexion impossible','st-err');
+    notify('⚠ Erreur réseau — vérifiez votre connexion');
+  });
+}
+
+function driveLoad(){
+  setSaveStatus('⏳ Chargement...','st-wait');
+  fetch(SCRIPT_URL+'?action=load')
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.exists===false){
+      setSaveStatus('Aucune donnée sur Drive','st-wait');
+      notify('ℹ️ Aucune sauvegarde trouvée sur Drive');
+      return;
+    }
+    if(d.error){
+      setSaveStatus('⚠ Erreur','st-err');
+      return;
+    }
+    initState(d);
+    renderAll();
+    var date=d.savedAt?new Date(d.savedAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    setSaveStatus('✓ Chargé — '+date,'st-ok');
+    notify('🔄 Données chargées depuis Google Drive !');
+  })
+  .catch(function(e){
+    setSaveStatus('⚠ Connexion impossible','st-err');
+  });
+}
+
+function renderAll(){
+  renderDb();
+  ['glaces','milkshakes','crepes'].forEach(function(c){
+    if(document.getElementById('page-'+c).style.display!=='none')renderCat(c);
+  });
+  if(document.getElementById('page-summary').style.display!=='none')renderSum();
+}
+
+// ══ UTILITAIRES ══
+function gdb(id){return db.find(function(i){return i.id===id;});}
+function gr(cat,id){return recs[cat].find(function(r){return r.id===id;});}
+function gc(cat){return gr(cat,curRec[cat]);}
+function icout(ring){var d=gdb(ring.dbId);if(!d)return 0;if(ring.pp)return d.pa;return((ring.qg||0)/1000)*d.pk;}
+function tqg(r){return r.ings.reduce(function(s,i){return s+(i.pp?0:(parseFloat(i.qg)||0));},0);}
+function cm10(r){return r.ings.reduce(function(s,i){return s+icout(i);},0);}
+function cmBac(r){return cm10(r)/2;}
+function fixB(r){return r.emb+r.en+r.mo;}
+function cBac(r){return cmBac(r)+fixB(r);}
+function cPiece(r){return r.ings.reduce(function(s,i){return s+icout(i);},0)+fixB(r);}
+function mrgPct(c,p){return p>0?((p-c)/p*100).toFixed(1):"0";}
+function mrgRs(c,p){return Math.round(p-c);}
+function notify(m){var e=document.getElementById("notif");e.textContent=m;e.classList.add("show");setTimeout(function(){e.classList.remove("show");},2500);}
+
+var CAT_LABEL={base:"Base",fruit:"Fruit",coque:"Coque",milk:"Milkshake",crepe:"Crêpe/Gaufre",autre:"Autre"};
+var CAT_NAMES={base:"Base vegan & additifs",fruit:"Fruits frais",coque:"Coques & pâtes",milk:"Milkshakes & boissons",crepe:"Crêpes & Gaufres",autre:"Divers"};
+var PAGES=["db","glaces","milkshakes","crepes","summary","production"];
+
+function showPage(p){
+  PAGES.forEach(function(pg){
+    document.getElementById("page-"+pg).style.display=pg===p?"block":"none";
+    document.getElementById("nav-"+pg).classList.toggle("active",pg===p);
+  });
+  if(["glaces","milkshakes","crepes"].indexOf(p)>=0)renderCat(p);
+  if(p==="summary")renderSum();
+  if(p==="production")renderProduction();
+}
+
+function renderDb(){
+  var cats=["base","fruit","coque","milk","crepe","autre"];
+  var h="";
+  cats.forEach(function(cat){
+    var items=db.filter(function(i){return i.cat===cat;});
+    if(!items.length)return;
+    h+='<tr><td colspan="6" style="padding:5px 10px;background:var(--ivoire);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gris);border-bottom:.5px solid var(--border)">'+CAT_NAMES[cat]+'</td></tr>';
+    items.forEach(function(ing){
+      var catOpts=["base","fruit","coque","milk","crepe","autre"].map(function(c){return '<option value="'+c+'" '+(ing.cat===c?"selected":"")+'>'+CAT_LABEL[c]+'</option>';}).join("");
+      h+='<tr>'
+        +'<td><input class="ci nl" value="'+ing.nom+'" '+(ing.locked?'readonly style="color:var(--gris)"':'')+' onchange="upDb('+ing.id+',\'nom\',this.value)"></td>'
+        +'<td>'+(ing.locked?'<span class="cb cb-'+ing.cat+'">'+CAT_LABEL[ing.cat]+'</span>':'<select class="sel" onchange="upDb('+ing.id+',\'cat\',this.value)">'+catOpts+'</select>')+'</td>'
+        +'<td>'+(ing.locked?'<span style="font-size:12px;color:var(--gris)">Calculé auto</span>':'<input class="ci" type="number" value="'+ing.pa+'" min="0" step="0.01" onchange="upDbP('+ing.id+',this.value)">')+'</td>'
+        +'<td style="font-size:11px;color:var(--gris)">'+ing.unite+'</td>'
+        +'<td style="text-align:right;font-weight:500;color:var(--vert)">'+(ing.locked?ing.pk.toFixed(2)+' Rs/kg':ing.pp?ing.pa+' Rs/portion':'<span id="pk-'+ing.id+'">'+ing.pk.toFixed(2)+'</span> Rs/kg')+'</td>'
+        +'<td style="text-align:center">'+(ing.locked?'':'<button class="btn btn-d" onclick="delDb('+ing.id+')">×</button>')+'</td>'
+        +'</tr>';
+    });
+  });
+  document.getElementById("db-body").innerHTML=h;
+}
+
+function upDb(id,f,v){var i=gdb(id);if(!i)return;i[f]=v;notify("✓ Mis à jour");recalcAll();}
+function upDbP(id,v){
+  var i=gdb(id);if(!i)return;
+  i.pa=parseFloat(v)||0;
+  if(!i.pp){if(i._r)i.pk=i.pa*i._r;else i.pk=i.pa;}
+  var e=document.getElementById("pk-"+id);if(e)e.textContent=i.pk.toFixed(2);
+  notify("✓ Prix mis à jour");recalcAll();
+}
+function delDb(id){if(!confirm("Supprimer ?"))return;db=db.filter(function(i){return i.id!==id;});renderDb();recalcAll();}
+function addIng(){db.push({id:nextDbId++,nom:"Nouvel ingrédient",cat:"autre",pa:0,unite:"/ kg",pk:0});renderDb();notify("+ Ajouté");}
+function recalcAll(){
+  ["glaces","milkshakes","crepes"].forEach(function(c){if(document.getElementById("page-"+c).style.display!=="none")renderCat(c);});
+  if(document.getElementById("page-summary").style.display!=="none")renderSum();
+}
+
+function updateTabName(cat,id,nom){
+  // Met à jour uniquement le texte de l'onglet actif sans re-rendre toute la page
+  var tabs=document.getElementById("tabs-"+cat);
+  if(!tabs)return;
+  var allTabs=tabs.querySelectorAll(".rtab.active");
+  if(allTabs.length>0)allTabs[0].textContent=nom||"Sans nom";
+}
+
+function renderCat(cat){
+  var rs=recs[cat];
+  document.getElementById("tabs-"+cat).innerHTML=rs.map(function(r){
+    return '<div class="rtab '+(r.id===curRec[cat]?"active":"")+'" onclick="curRec[\''+cat+'\']='+ r.id+';renderCat(\''+cat+'\')">'+r.nom+'</div>';
+  }).join('')+'<div class="rtab add" onclick="addRec(\''+cat+'\')">+ Ajouter</div>';
+  var r=gc(cat);
+  if(!r){document.getElementById("editor-"+cat).innerHTML="";return;}
+  renderEd(cat,r);
+}
+
+function renderEd(cat,r){
+  var isG=cat==="glaces",isM=cat==="milkshakes";
+  var coutU=isG?cBac(r):cPiece(r);
+  var pv=r.pv||0;
+  var hcls=isG?"rp-glace":isM?"rp-milk":r.st==="gaufre"?"rp-gaufre":"rp-crepe";
+  var ulbl=isG?"/ bac (5 kg)":isM?"/ verre":"/ pièce";
+  var slMax=isG?15000:500;
+
+  var stOpts=isG
+    ?'<option value="fruit" '+(r.st==="fruit"?"selected":"")+'>Fruit</option><option value="coque" '+(r.st==="coque"?"selected":"")+'>Coque</option>'
+    :isM?'<option value="milk">Milkshake</option>'
+    :'<option value="crepe" '+(r.st==="crepe"?"selected":"")+'>Crêpe</option><option value="gaufre" '+(r.st==="gaufre"?"selected":"")+'>Gaufre</option>';
+
+  var iRows=r.ings.map(function(ring){
+    var d=gdb(ring.dbId);
+    var cout=icout(ring);
+    var pu=d?(d.pp?d.pa+" Rs/port.":d.pk.toFixed(0)+" Rs/kg"):"-";
+    var dbSorted=db.slice().sort(function(a,b){return a.nom.localeCompare(b.nom,'fr');});
+    var dbOpts=dbSorted.map(function(i){return '<option value="'+i.id+'" '+(i.id===ring.dbId?"selected":"")+'>'+i.nom+'</option>';}).join("");
+    var qtyCell=ring.pp
+      ?'<div style="font-size:12px;color:var(--gris);padding:5px 0;text-align:right">1 portion</div>'
+      :'<div class="qw"><input type="number" class="qn" id="qn-'+ring.id+'" value="'+(ring.qg||0)+'" min="0" step="1" oninput="upRIng(\''+cat+'\','+r.id+','+ring.id+',\'qg\',this.value);document.getElementById(\'qs-'+ring.id+'\').value=Math.min(this.value,'+slMax+')"><input type="range" class="qs" id="qs-'+ring.id+'" min="0" max="'+slMax+'" step="'+(isG?10:1)+'" value="'+Math.min(ring.qg||0,slMax)+'" oninput="upRIng(\''+cat+'\','+r.id+','+ring.id+',\'qg\',this.value);document.getElementById(\'qn-'+ring.id+'\').value=this.value"></div>';
+    return '<tr>'
+      +'<td><select class="sel" onchange="upRIng(\''+cat+'\','+r.id+','+ring.id+',\'dbId\',this.value)">'+dbOpts+'</select></td>'
+      +'<td style="width:'+(isG?155:110)+'px">'+qtyCell+'</td>'
+      +'<td style="width:18px;font-size:10px;color:var(--gris)">'+(ring.pp?"":"g")+'</td>'
+      +'<td style="width:90px;font-size:10px;color:var(--gris);text-align:right">'+pu+'</td>'
+      +'<td class="cc '+(d&&d.locked?"vt":"")+'" id="rc-'+ring.id+'" style="width:80px">'+cout.toFixed(2)+' Rs</td>'
+      +'<td style="width:28px"><button class="btn btn-d" onclick="delRIng(\''+cat+'\','+r.id+','+ring.id+')">×</button></td>'
+      +'</tr>';
+  }).join("");
+
+  var tfoot="",poids="";
+  if(isG){
+    var tkg=tqg(r)/1000,diff=Math.abs(tkg-10),c10=cm10(r);
+    var pcls=diff<0.5?"pi-ok":diff<1.5?"pi-warn":"pi-bad";
+    var pmsg=diff<0.5?"✓ 10 kg atteints":tkg<10?(10000-tqg(r)).toFixed(0)+"g manquants":(tqg(r)-10000).toFixed(0)+"g de trop";
+    tfoot='<tfoot><tr><td>Total préparation</td><td style="text-align:right;color:'+(diff<0.5?"var(--vert)":diff<1.5?"var(--warn)":"var(--red)")+'" id="tq-'+r.id+'">'+tkg.toFixed(3)+' kg</td><td colspan="2"></td><td style="text-align:right;color:var(--vert)" id="tm-'+r.id+'">'+c10.toFixed(2)+' Rs</td><td></td></tr></tfoot>';
+    poids='<div class="pi '+pcls+'" id="pi-'+r.id+'"><span>'+pmsg+'</span><span style="font-weight:500">'+tkg.toFixed(2)+' / 10 kg</span></div>';
+  }
+
+  var pvInput=!isG?'<div style="display:flex;align-items:center;gap:8px;margin-left:auto"><label style="font-size:12px;color:var(--gris)">Prix vente</label><input type="number" value="'+pv+'" min="0" step="5" style="width:90px;padding:5px 8px;border-radius:4px;border:.5px solid var(--border);background:var(--bg2);font-size:13px;text-align:right;outline:none;font-family:Jost,sans-serif" oninput="gc(\''+cat+'\').pv=parseFloat(this.value)||0;refreshEd(\''+cat+'\')"><span style="font-size:11px;color:var(--gris)">Rs</span></div>':"";
+
+  document.getElementById("editor-"+cat).innerHTML=
+    '<div class="rg">'
+    +'<div>'
+    +'<div class="card card-sm" style="margin-bottom:1rem"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
+    +'<input id="rec-nom-'+r.id+'" style="font-size:15px;font-weight:500;border:none;border-bottom:1px solid var(--border);padding:4px 0;background:none;outline:none;flex:1;min-width:130px;font-family:Jost,sans-serif;color:var(--brun)" value="'+r.nom+'" oninput="gc(\''+cat+'\').nom=this.value;updateTabName(\''+cat+'\','+r.id+',this.value)" onblur="renderCat(\''+cat+'\')">'
+    +'<select class="sel" style="width:110px" onchange="gc(\''+cat+'\').st=this.value;renderCat(\''+cat+'\')">'+stOpts+'</select>'
+    +pvInput
+    +'<button class="btn btn-d" onclick="delRec(\''+cat+'\','+r.id+')">Supprimer</button>'
+    +'</div></div>'
+    +'<div class="card" style="padding:0;overflow:hidden;margin-bottom:.75rem">'
+    +'<div style="padding:.75rem 1.25rem .5rem;border-bottom:.5px solid var(--border)"><div class="slbl">'+(isG?"Fiche — 10 kg = 2 bacs de 5 kg":isM?"Fiche — par verre":"Fiche — par pièce")+'</div></div>'
+    +'<table class="it"><thead><tr><th>Ingrédient</th><th style="width:'+(isG?155:110)+'px;text-align:right">Quantité</th><th style="width:18px"></th><th style="width:90px;text-align:right">Prix unit.</th><th class="r" style="width:80px">Coût</th><th style="width:28px"></th></tr></thead>'
+    +'<tbody id="tb-'+r.id+'">'+iRows+'</tbody>'+tfoot+'</table></div>'
+    +poids
+    +'<button class="btn btn-g" style="margin-bottom:1rem" onclick="addRIng(\''+cat+'\','+r.id+')">+ Ajouter un ingrédient</button>'
+    +'<div class="card card-sm"><div class="slbl">Coûts fixes '+(isG?"/ bac":isM?"/ verre":"/ pièce")+'</div>'
+    +'<div class="fc-r"><label>Emballage</label><input type="number" value="'+r.emb+'" oninput="gc(\''+cat+'\').emb=parseFloat(this.value)||0;refreshEd(\''+cat+'\')"><span>Rs</span></div>'
+    +'<div class="fc-r"><label>Énergie</label><input type="number" value="'+r.en+'" oninput="gc(\''+cat+'\').en=parseFloat(this.value)||0;refreshEd(\''+cat+'\')"><span>Rs</span></div>'
+    +'<div class="fc-r"><label>Main d\'oeuvre</label><input type="number" value="'+r.mo+'" oninput="gc(\''+cat+'\').mo=parseFloat(this.value)||0;refreshEd(\''+cat+'\')"><span>Rs</span></div>'
+    +'</div></div>'
+    +'<div class="rp-wrap" id="rp-'+r.id+'">'+buildRP(cat,r,coutU,pv,hcls,ulbl)+'</div>'
+    +'</div>';
+}
+
+function buildRP(cat,r,coutU,pv,hcls,ulbl){
+  var isG=cat==="glaces",isM=cat==="milkshakes";
+  var c10=isG?cm10(r):0,cbv=isG?cmBac(r):0;
+  var mCards="";
+
+  if(isG){
+    mCards=[{l:"30%",pct:30},{l:"40%",pct:40,rec:true},{l:"50%",pct:50}].map(function(m){
+      var p=coutU/(1-m.pct/100);
+      return '<div class="mc '+(m.rec?"rec-v":"")+'"><div><div class="mc-lbl">Marge '+m.l+(m.rec?" ★":"")+'</div><div class="mc-ben">+ '+Math.round(p-coutU)+' Rs/bac</div></div><div class="mc-val">'+Math.round(p)+' Rs</div></div>';
+    }).join("");
+    var mkR=PRIX_BAC_RETAIL-coutU,msR=CA_SCOOP_BAC-coutU;
+    var cSc=(coutU/SCOOPS_BAC).toFixed(1);
+    mCards+='<div style="margin-top:12px;border-top:1px dashed rgba(59,92,63,0.2);padding-top:10px">'
+      +'<div class="slbl" style="margin-bottom:8px">Repères prix de vente</div>'
+      +'<div class="repere" style="background:#FFF8F0;border-color:var(--cappuccino)"><div class="rep-title" style="color:var(--cappuccino-f)">🛍 Vente au kg · '+PRIX_KG_RETAIL+' Rs/kg</div><div class="rep-detail">'+BAC_KG+'kg × '+PRIX_KG_RETAIL+' Rs = '+PRIX_BAC_RETAIL.toLocaleString()+' Rs/bac</div><div class="rep-marge" style="color:'+(mkR>0?"var(--vert)":"var(--red)")+'">'+(mkR>0?"Marge "+((mkR/PRIX_BAC_RETAIL)*100).toFixed(1)+"% · +"+Math.round(mkR)+" Rs":"⚠ Coût > plafond")+'</div></div>'
+      +'<div class="repere" style="background:#F0FDF4;border-color:var(--vert)"><div class="rep-title" style="color:var(--vert)">🍦 Vente au scoop · '+PRIX_SCOOP+' Rs/100g</div><div class="rep-detail">'+SCOOPS_BAC+' scoops × '+PRIX_SCOOP+' Rs = '+CA_SCOOP_BAC.toLocaleString()+' Rs/bac · Coût/scoop : '+cSc+' Rs</div><div class="rep-marge" style="color:'+(msR>0?"var(--vert)":"var(--red)")+'">'+(msR>0?"Marge "+((msR/CA_SCOOP_BAC)*100).toFixed(1)+"% · Bénéfice/scoop : +"+Math.round(PRIX_SCOOP-parseFloat(cSc))+" Rs":"⚠ Coût > plafond")+'</div></div>'
+      +'</div>';
+  } else {
+    var ok=pv>coutU;
+    var recCls=isM?"rec-b":r.st==="gaufre"?"rec-g":"rec-c";
+    mCards='<div class="mc '+recCls+'"><div><div class="mc-lbl">Prix de vente</div><div class="mc-ben">'+(ok?"✓ Rentable":"⚠ Prix < coût")+'</div></div><div class="mc-val">'+pv+' Rs</div></div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">'
+      +'<div style="background:var(--bg2);border-radius:4px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--gris);margin-bottom:3px">Marge</div><div style="font-size:20px;font-weight:500;color:'+(ok?"var(--vert)":"var(--red)")+'">'+mrgPct(coutU,pv)+'%</div></div>'
+      +'<div style="background:'+(ok?"var(--vert-pale)":"#FEE2E2")+';border-radius:4px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--gris);margin-bottom:3px">Bénéfice</div><div style="font-size:20px;font-weight:500;color:'+(ok?"var(--vert)":"var(--red)")+'">+'+mrgRs(coutU,pv)+' Rs</div></div>'
+      +'</div>';
+  }
+
+  var bkdwn=isG
+    ?'<div class="rp-row"><span>Matières (10 kg)</span><span>'+Math.round(c10)+' Rs</span></div><div class="rp-row"><span>Matières / bac (÷2)</span><span>'+Math.round(cbv)+' Rs</span></div><div class="rp-row"><span>Emballage</span><span>'+r.emb+' Rs</span></div><div class="rp-row"><span>Énergie</span><span>'+r.en+' Rs</span></div><div class="rp-row"><span>Main d\'oeuvre</span><span>'+r.mo+' Rs</span></div>'
+    :'<div class="rp-row"><span>Matières premières</span><span>'+r.ings.reduce(function(s,i){return s+icout(i);},0).toFixed(2)+' Rs</span></div><div class="rp-row"><span>Emballage</span><span>'+r.emb+' Rs</span></div><div class="rp-row"><span>Énergie</span><span>'+r.en+' Rs</span></div><div class="rp-row"><span>Main d\'oeuvre</span><span>'+r.mo+' Rs</span></div>';
+
+  return '<div class="rp-head '+hcls+'"><div class="rp-parfum">'+r.nom+'</div><div class="rp-crl">Coût de revient '+ulbl+'</div><div class="rp-crv">'+Math.round(coutU)+' Rs</div></div>'
+    +'<div class="rp-body"><div class="slbl" style="margin-bottom:6px">Détail coûts</div><div style="margin-bottom:1rem">'+bkdwn+'</div><div class="slbl" style="margin-bottom:8px">'+(isG?"Prix de vente":"Rentabilité")+'</div>'+mCards+'</div>';
+}
+
+function refreshEd(cat){
+  var r=gc(cat);if(!r)return;
+  var isG=cat==="glaces",isM=cat==="milkshakes";
+  var coutU=isG?cBac(r):cPiece(r);
+  var hcls=isG?"rp-glace":isM?"rp-milk":r.st==="gaufre"?"rp-gaufre":"rp-crepe";
+  var ulbl=isG?"/ bac (5 kg)":isM?"/ verre":"/ pièce";
+  r.ings.forEach(function(ring){var e=document.getElementById("rc-"+ring.id);if(e)e.textContent=icout(ring).toFixed(2)+" Rs";});
+  if(isG){
+    var tkg=tqg(r)/1000,diff=Math.abs(tkg-10),c10=cm10(r);
+    var tqE=document.getElementById("tq-"+r.id),tmE=document.getElementById("tm-"+r.id),piE=document.getElementById("pi-"+r.id);
+    if(tqE)tqE.textContent=tkg.toFixed(3)+" kg";
+    if(tmE)tmE.textContent=c10.toFixed(2)+" Rs";
+    if(piE){
+      var msg=diff<0.5?"✓ 10 kg atteints":tkg<10?(10000-tqg(r)).toFixed(0)+"g manquants":(tqg(r)-10000).toFixed(0)+"g de trop";
+      piE.className="pi "+(diff<0.5?"pi-ok":diff<1.5?"pi-warn":"pi-bad");
+      piE.innerHTML="<span>"+msg+"</span><span style='font-weight:500'>"+tkg.toFixed(2)+" / 10 kg</span>";
+    }
+  }
+  var rpE=document.getElementById("rp-"+r.id);
+  if(rpE)rpE.innerHTML=buildRP(cat,r,coutU,r.pv||0,hcls,ulbl);
+  if(document.getElementById("page-summary").style.display!=="none")renderSum();
+}
+
+function upRIng(cat,rid,iid,field,val){
+  var r=gr(cat,rid);if(!r)return;
+  var ring=r.ings.find(function(i){return i.id===iid;});if(!ring)return;
+  ring[field]=field==="dbId"?parseInt(val):(parseFloat(val)||0);
+  if(field==="qg"){var sl=document.getElementById("qs-"+iid);if(sl)sl.value=Math.min(val,parseFloat(sl.max));}
+  refreshEd(cat);
+}
+function addRIng(cat,rid){
+  var r=gr(cat,rid);if(!r)return;
+  r.ings.push({id:nextRIng++,dbId:db[0].id,qg:0,pp:false});
+  renderCat(cat);
+}
+function delRIng(cat,rid,iid){
+  var r=gr(cat,rid);if(!r)return;
+  r.ings=r.ings.filter(function(i){return i.id!==iid;});
+  renderCat(cat);
+}
+function addRec(cat){
+  var isG=cat==="glaces",isM=cat==="milkshakes";
+  var id=nextId++;
+  recs[cat].push({id:id,nom:"Nouvelle recette",st:isG?"fruit":isM?"milk":"crepe",pv:0,
+    ings:[{id:nextRIng++,dbId:isG?1:isM?21:28,qg:isG?6250:100,pp:false}],
+    emb:isG?100:20,en:isG?80:15,mo:isG?300:50});
+  curRec[cat]=id;renderCat(cat);
+}
+function delRec(cat,id){
+  if(recs[cat].length===1){notify("⚠ Impossible de supprimer la dernière recette");return;}
+  if(!confirm("Supprimer ?"))return;
+  recs[cat]=recs[cat].filter(function(r){return r.id!==id;});
+  curRec[cat]=recs[cat][0].id;renderCat(cat);
+}
+
+function renderSum(){
+  var tb=document.getElementById("sum-body");if(!tb)return;
+  var h="";
+  [{key:"glaces",lbl:"🍦 Glaces Vegan",col:"var(--vert)"},
+   {key:"milkshakes",lbl:"🥤 Milkshakes & Frappés",col:"#0369A1"},
+   {key:"crepes",lbl:"🥞 Crêpes & Gaufres",col:"#BE123C"}
+  ].forEach(function(sec){
+    h+='<tr class="cat-row"><td colspan="7" style="color:'+sec.col+'">'+sec.lbl+'</td></tr>';
+    recs[sec.key].forEach(function(r){
+      var isG=sec.key==="glaces";
+      var coutU=isG?cBac(r):cPiece(r);
+      var pv=r.pv||0;
+      var ok=pv>coutU||isG;
+      var ulbl=isG?"bac":sec.key==="milkshakes"?"verre":"pièce";
+      var stb='<span class="tb tb-'+(r.st||sec.key)+'">'+(r.st||sec.key)+'</span>';
+      if(isG){
+        var mkR=PRIX_BAC_RETAIL-coutU,msR=CA_SCOOP_BAC-coutU;
+        h+='<tr><td style="font-weight:500">'+r.nom+'</td><td>'+stb+'</td><td style="font-size:11px;color:var(--gris)">'+ulbl+'</td>'
+          +'<td>'+Math.round(coutU)+' Rs</td>'
+          +'<td style="font-size:11px;color:var(--gris)">40%→'+Math.round(coutU/0.6)+' Rs</td>'
+          +'<td class="rc">'+((mkR/PRIX_BAC_RETAIL)*100).toFixed(0)+'% kg retail</td>'
+          +'<td class="vt">+'+Math.round(msR)+' Rs/bac scoop</td></tr>';
+      } else {
+        h+='<tr><td style="font-weight:500">'+r.nom+'</td><td>'+stb+'</td><td style="font-size:11px;color:var(--gris)">'+ulbl+'</td>'
+          +'<td>'+Math.round(coutU)+' Rs</td>'
+          +'<td style="font-weight:500">'+pv+' Rs</td>'
+          +'<td class="'+(ok?"rc":"")+'"><span style="color:'+(ok?"var(--vert)":"var(--red)")+'">'+mrgPct(coutU,pv)+'%</span></td>'
+          +'<td class="'+(ok?"gn":"")+'"><span style="color:'+(ok?"var(--vert)":"var(--red)")+'">+'+mrgRs(coutU,pv)+' Rs</span></td></tr>';
+      }
+    });
+  });
+  tb.innerHTML=h;
+}
+
+// ══ PRODUCTION ══
+var selectedRecs = {}; // {cat_id: true}
+
+function prodKey(cat,id){ return cat+"_"+id; }
+
+function toggleRec(cat,id){
+  var k=prodKey(cat,id);
+  if(selectedRecs[k]) delete selectedRecs[k];
+  else selectedRecs[k]=true;
+  // Update checkbox visually
+  var cb=document.getElementById("chk-"+k);
+  if(cb) cb.checked=!!selectedRecs[k];
+  // Update result panel only
+  var zone=document.getElementById("prod-result-zone");
+  if(zone) zone.innerHTML=buildProductionResult();
+}
+
+function resetSelection(){
+  selectedRecs={};
+  renderProduction();
+}
+
+function renderProduction(){
+  var html='<div class="prod-grid">'
+    +'<div>'
+    +'<div class="prod-select-box">'
+    +'<div class="prod-select-header"><div class="slbl" style="margin-bottom:0">🍦 Sélectionnez vos parfums du jour</div></div>';
+
+  recs.glaces.forEach(function(r){
+    var k=prodKey("glaces",r.id);
+    var base=r.ings.find(function(i){var d=gdb(i.dbId);return d&&d.locked;});
+    var baseQg=base?base.qg:0;
+    var totalKg=(tqg(r)/1000).toFixed(2);
+    html+='<div class="prod-check-row" onclick="toggleRec(\'glaces\','+r.id+')">'
+      +'<input type="checkbox" id="chk-'+k+'" '+(selectedRecs[k]?"checked":"")+'>'
+      +'<div style="flex:1">'
+      +'<div class="prod-check-label">'+r.nom+'</div>'
+      +'<div class="prod-check-detail">Base : '+baseQg+'g · Préparation : '+totalKg+'kg → 2 bacs de 5kg</div>'
+      +'</div>'
+      +'<div style="text-align:right;font-size:11px;color:var(--cappuccino-f);font-weight:500">'+baseQg+'g</div>'
+      +'</div>';
+  });
+
+  html+='</div></div>'
+    +'<div id="prod-result-zone">'+buildProductionResult()+'</div>'
+    +'</div>';
+
+  document.getElementById("production-content").innerHTML=html;
+}
+
+function buildProductionResult(){
+  var selected=Object.keys(selectedRecs).filter(function(k){return selectedRecs[k]&&k.indexOf("glaces")===0;});
+
+  if(selected.length===0){
+    return '<div class="prod-result"><div class="prod-result-title">Résumé de production</div><div class="prod-empty">Sélectionnez vos parfums<br>pour calculer votre base vegan</div></div>';
+  }
+
+  var totalBaseG=0;
+  var totalBacs=0;
+  var ingMap={};
+  var recipeCards=[];
+
+  selected.forEach(function(k){
+    var parts=k.split("_");
+    var id=parseInt(parts[1]);
+    var r=gr("glaces",id); if(!r)return;
+
+    var baseIng=r.ings.find(function(i){var d=gdb(i.dbId);return d&&d.locked;});
+    var baseQg=baseIng?baseIng.qg:0;
+    var prepKg=(tqg(r)/1000).toFixed(2);
+    totalBaseG+=baseQg;
+    totalBacs+=2;
+
+    recipeCards.push({
+      nom:r.nom,
+      baseQg:baseQg,
+      prepKg:prepKg,
+      st:r.st
+    });
+
+    // Agréger les ingrédients (hors base vegan)
+    r.ings.forEach(function(ring){
+      var d=gdb(ring.dbId); if(!d)return;
+      if(d.locked)return; // on exclut la base vegan de la liste détaillée
+      var key=ring.dbId;
+      if(!ingMap[key]) ingMap[key]={nom:d.nom,totalG:0,portions:0,pp:d.pp||false,unite:d.unite};
+      if(ring.pp) ingMap[key].portions+=1;
+      else ingMap[key].totalG+=(parseFloat(ring.qg)||0);
+    });
+  });
+
+  var totalBaseL=(totalBaseG/1000).toFixed(2);
+  var totalBaseKg=(totalBaseG/1000).toFixed(3);
+
+  // Stats
+  var statsHtml='<div class="prod-stat-grid">'
+    +'<div class="prod-stat"><div class="prod-stat-val">'+totalBaseL+'L</div><div class="prod-stat-lbl">Base vegan</div></div>'
+    +'<div class="prod-stat"><div class="prod-stat-val">'+totalBacs+'</div><div class="prod-stat-lbl">Bacs produits</div></div>'
+    +'<div class="prod-stat"><div class="prod-stat-val">'+selected.length+'</div><div class="prod-stat-lbl">Parfums</div></div>'
+    +'</div>';
+
+  // Base vegan highlight
+  var baseHighlight='<div style="background:rgba(196,168,130,0.2);border:1px solid rgba(196,168,130,0.4);border-radius:4px;padding:12px 14px;margin-bottom:1rem;text-align:center">'
+    +'<div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(247,243,236,0.5);margin-bottom:4px">Base vegan à préparer</div>'
+    +'<div style="font-size:32px;font-weight:300;color:var(--cappuccino)">'+totalBaseKg+' kg</div>'
+    +'<div style="font-size:11px;color:rgba(247,243,236,0.5);margin-top:2px">soit '+totalBaseL+' litres de boisson avoine</div>'
+    +'</div>';
+
+  // Recipe cards
+  var cardsHtml='<div style="margin-bottom:1rem">';
+  recipeCards.forEach(function(rc){
+    var badge=rc.st==="fruit"?"🌴":"🥜";
+    cardsHtml+='<div class="prod-recipe-card">'
+      +'<div class="prod-recipe-name">'+badge+' '+rc.nom+'</div>'
+      +'<div class="prod-recipe-detail">Base : '+rc.baseQg+'g · Prép. totale : '+rc.prepKg+'kg → 2 bacs de 5kg</div>'
+      +'</div>';
+  });
+  cardsHtml+='</div>';
+
+  // Autres ingrédients
+  var ingList=Object.values(ingMap).sort(function(a,b){return a.nom.localeCompare(b.nom,'fr');});
+  var ingRows="";
+  if(ingList.length>0){
+    ingRows='<div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:1rem">'
+      +'<div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(247,243,236,0.4);margin-bottom:8px">Autres ingrédients à prévoir</div>'
+      +'<table class="prod-ing-table"><thead><tr><th>Ingrédient</th><th class="r">Quantité</th></tr></thead><tbody>';
+    ingList.forEach(function(ing){
+      var qtyStr="";
+      if(ing.pp) qtyStr=ing.portions+" portion"+(ing.portions>1?"s":"");
+      else if(ing.totalG>=1000) qtyStr=(ing.totalG/1000).toFixed(3)+" kg";
+      else qtyStr=ing.totalG.toFixed(0)+" g";
+      ingRows+='<tr><td>'+ing.nom+'</td><td class="val">'+qtyStr+'</td></tr>';
+    });
+    ingRows+='</tbody></table></div>';
+  }
+
+  return '<div class="prod-result">'
+    +'<div class="prod-result-title">Résumé de production</div>'
+    +statsHtml
+    +baseHighlight
+    +cardsHtml
+    +ingRows
+    +'</div>';
+}
+
+// ══ INIT ══
+initState(null);
+db.forEach(function(i){if(!i.locked&&!i.pp&&i.pa>0&&i.pk>0)i._r=i.pk/i.pa;});
+renderDb();
+renderSum();
+setSaveStatus('Cliquez 🔄 pour charger vos données','st-wait');
+</script>
+</body>
+</html>
