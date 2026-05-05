@@ -339,7 +339,7 @@ function getState(){
   return {db:db,recs:recs,curRec:curRec,nextDbId:nextDbId,nextId:nextId,nextRIng:nextRIng,savedAt:new Date().toISOString()};
 }
 
-// ══ GOOGLE DRIVE SYNC ══
+// ══ GOOGLE DRIVE SYNC — JSONP ══
 function setSaveStatus(msg,cls){
   var el=document.getElementById('save-status');
   if(!el)return;
@@ -347,52 +347,66 @@ function setSaveStatus(msg,cls){
   el.className='save-status '+(cls||'st-wait');
 }
 
+function jsonp(url, callback) {
+  var cbName = 'gg_cb_' + Date.now();
+  window[cbName] = function(data) {
+    delete window[cbName];
+    document.getElementById('jsonp-script').remove();
+    callback(null, data);
+  };
+  var script = document.createElement('script');
+  script.id = 'jsonp-script';
+  script.src = url + '&callback=' + cbName;
+  script.onerror = function() {
+    delete window[cbName];
+    callback(new Error('Connexion impossible'));
+  };
+  document.head.appendChild(script);
+}
+
 function driveSync(){
   setSaveStatus('⏳ Sauvegarde...','st-wait');
-  var form=document.createElement('form');
-  form.method='POST';
-  form.action=SCRIPT_URL;
-  form.target='drive-frame';
-  var input=document.createElement('input');
-  input.type='hidden';
-  input.name='payload';
-  input.value=JSON.stringify({action:'save',payload:getState()});
-  form.appendChild(input);
-  document.body.appendChild(form);
-  form.submit();
-  document.body.removeChild(form);
-  setTimeout(function(){
-    setSaveStatus('✓ Sauvegardé','st-ok');
-    notify('💾 Données sauvegardées sur Google Drive !');
-  },2000);
+  var data = encodeURIComponent(JSON.stringify(getState()));
+  var url  = SCRIPT_URL + '?action=save&data=' + data;
+  jsonp(url, function(err, d) {
+    if(err) {
+      setSaveStatus('⚠ Connexion impossible','st-err');
+      notify('⚠ Erreur de connexion Drive');
+      return;
+    }
+    if(d && d.success) {
+      var now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      setSaveStatus('✓ Sauvegardé à ' + now,'st-ok');
+      notify('💾 Données sauvegardées sur Google Drive !');
+    } else {
+      setSaveStatus('⚠ Erreur : ' + (d&&d.error||'inconnue'),'st-err');
+    }
+  });
 }
 
 function driveLoad(){
   setSaveStatus('⏳ Chargement...','st-wait');
-  fetch(SCRIPT_URL+'?action=load',{
-    method:'GET',
-    mode:'cors'
-  })
-  .then(function(r){return r.json();})
-  .then(function(d){
-    if(d.exists===false){
+  var url = SCRIPT_URL + '?action=load';
+  jsonp(url, function(err, d) {
+    if(err) {
+      setSaveStatus('⚠ Connexion impossible','st-err');
+      notify('⚠ Erreur de connexion Drive');
+      return;
+    }
+    if(d.exists === false) {
       setSaveStatus('Aucune donnée sur Drive','st-wait');
       notify('ℹ️ Aucune sauvegarde trouvée sur Drive');
       return;
     }
-    if(d.error){
-      setSaveStatus('⚠ Erreur : '+d.error,'st-err');
+    if(d.error) {
+      setSaveStatus('⚠ Erreur : ' + d.error,'st-err');
       return;
     }
     initState(d);
     renderAll();
-    var date=d.savedAt?new Date(d.savedAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
-    setSaveStatus('✓ Chargé — '+date,'st-ok');
+    var date = d.savedAt ? new Date(d.savedAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    setSaveStatus('✓ Chargé — ' + date,'st-ok');
     notify('🔄 Données chargées depuis Google Drive !');
-  })
-  .catch(function(e){
-    setSaveStatus('⚠ Connexion impossible','st-err');
-    notify('⚠ Vérifiez le déploiement du script Google');
   });
 }
 
