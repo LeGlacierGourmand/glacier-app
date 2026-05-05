@@ -244,6 +244,7 @@ body{font-family:'Jost',sans-serif;background:var(--ivoire);color:var(--brun);mi
   </main>
 </div>
 <div class="notif" id="notif"></div>
+<iframe name="drive-frame" style="display:none"></iframe>
 
 <script>
 // ══ GOOGLE DRIVE API URL ══
@@ -347,29 +348,31 @@ function setSaveStatus(msg,cls){
 }
 
 function driveSync(){
-  setSaveStatus('⏳ Sauvegarde en cours...','st-wait');
-  var payload=encodeURIComponent(JSON.stringify(getState()));
-  var url=SCRIPT_URL+'?action=save&payload='+payload;
-  fetch(url)
-  .then(function(r){return r.json();})
-  .then(function(d){
-    if(d.success){
-      var now=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-      setSaveStatus('✓ Sauvegardé à '+now,'st-ok');
-      notify('💾 Données sauvegardées sur Google Drive !');
-    } else {
-      setSaveStatus('⚠ Erreur : '+(d.error||'inconnue'),'st-err');
-    }
-  })
-  .catch(function(e){
-    setSaveStatus('⚠ Connexion impossible','st-err');
-    notify('⚠ Erreur réseau');
-  });
+  setSaveStatus('⏳ Sauvegarde...','st-wait');
+  var form=document.createElement('form');
+  form.method='POST';
+  form.action=SCRIPT_URL;
+  form.target='drive-frame';
+  var input=document.createElement('input');
+  input.type='hidden';
+  input.name='payload';
+  input.value=JSON.stringify({action:'save',payload:getState()});
+  form.appendChild(input);
+  document.body.appendChild(form);
+  form.submit();
+  document.body.removeChild(form);
+  setTimeout(function(){
+    setSaveStatus('✓ Sauvegardé','st-ok');
+    notify('💾 Données sauvegardées sur Google Drive !');
+  },2000);
 }
 
 function driveLoad(){
   setSaveStatus('⏳ Chargement...','st-wait');
-  fetch(SCRIPT_URL+'?action=load')
+  fetch(SCRIPT_URL+'?action=load',{
+    method:'GET',
+    mode:'cors'
+  })
   .then(function(r){return r.json();})
   .then(function(d){
     if(d.exists===false){
@@ -378,7 +381,7 @@ function driveLoad(){
       return;
     }
     if(d.error){
-      setSaveStatus('⚠ Erreur','st-err');
+      setSaveStatus('⚠ Erreur : '+d.error,'st-err');
       return;
     }
     initState(d);
@@ -389,6 +392,7 @@ function driveLoad(){
   })
   .catch(function(e){
     setSaveStatus('⚠ Connexion impossible','st-err');
+    notify('⚠ Vérifiez le déploiement du script Google');
   });
 }
 
